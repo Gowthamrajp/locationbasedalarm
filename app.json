@@ -1,29 +1,43 @@
 {
   "expo": {
-    "name": "locationbasedalarm_tmp",
-    "slug": "locationbasedalarm_tmp",
+    "name": "Vigilant Path",
+    "slug": "location-based-alarm",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0040a1"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vigilantpath.locationbasedalarm",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to trigger alarms when you approach your destination.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Background location is used to monitor your proximity to saved destinations and trigger alarms.",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0040a1"
+      },
+      "package": "com.vigilantpath.locationbasedalarm",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "VIBRATE",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     }
   }
 }

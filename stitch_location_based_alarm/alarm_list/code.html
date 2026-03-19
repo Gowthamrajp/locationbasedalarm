@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vigilant Path - Alarms</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#ffdfa0",
+                        "surface-container-highest": "#e1e2ec",
+                        "secondary": "#a43c12",
+                        "on-tertiary-container": "#ffd274",
+                        "outline-variant": "#c3c6d6",
+                        "surface-dim": "#d9d9e4",
+                        "primary-fixed": "#dae2ff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#ededf8",
+                        "on-error-container": "#93000a",
+                        "surface": "#faf8ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2e3038",
+                        "outline": "#737785",
+                        "on-primary-container": "#ccd8ff",
+                        "on-background": "#191b23",
+                        "inverse-primary": "#b2c5ff",
+                        "on-primary-fixed-variant": "#0040a1",
+                        "on-secondary-fixed": "#380c00",
+                        "tertiary": "#5b4300",
+                        "surface-container-high": "#e7e7f2",
+                        "surface-variant": "#e1e2ec",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191b23",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#fe7e4f",
+                        "on-secondary-container": "#6b1f00",
+                        "surface-container-low": "#f2f3fe",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#0040a1",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "surface-tint": "#0056d2",
+                        "inverse-on-surface": "#f0f0fb",
+                        "secondary-fixed-dim": "#ffb59c",
+                        "tertiary-fixed-dim": "#fbbc00",
+                        "background": "#faf8ff",
+                        "primary-container": "#0056d2",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "tertiary-container": "#795900",
+                        "on-secondary-fixed-variant": "#822800",
+                        "secondary-fixed": "#ffdbcf",
+                        "on-tertiary-fixed": "#261a00",
+                        "on-primary-fixed": "#001847",
+                        "on-surface-variant": "#424654"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Plus Jakarta Sans"],
+                        "label": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/70 backdrop-blur-xl shadow-sm dark:bg-slate-900/70 dark:shadow-none">
+<div class="flex items-center justify-between px-6 h-16 w-full">
+<button class="p-2 text-blue-700 dark:text-blue-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors active:scale-95 duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-manrope font-extrabold tracking-tight text-xl text-blue-700 dark:text-blue-400">Vigilant Path</h1>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed shadow-sm">
+<img alt="User profile avatar" data-alt="Close up portrait of a smiling young professional man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRSuKw9IhEN9_hQ9NjIMO4zSOL0nJGY3lJCs-jHdnV7wZX3DU9Kq6cm3QaKC8rounEIsRUpEIDnqJ0tHoPHfk0G88p6_UzjMpAew52sdS5y4bC-pFQEvMOtrRHrmd9iVv6AQ9glqMtEtN7wIU7YWa496SOm1aykePEUMjALDOzMgWluifwXL9vWGrmgcAKp9urx3Lt20xEJHaiBbw4EMvKXV1hdI1yso7Kfp0StCz81b5urceRMP44z7MfSeJD3D-iRMbrLsherw0"/>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-2xl mx-auto">
+<!-- Editorial Header -->
+<div class="mb-10">
+<p class="text-primary font-semibold tracking-wide text-xs uppercase mb-2">Active Monitor</p>
+<h2 class="font-headline text-4xl font-extrabold text-on-background tracking-tight">Your Alarms</h2>
+<p class="text-on-surface-variant mt-2 text-lg">Safely navigating your daily commutes.</p>
+</div>
+<!-- Bento Alarm List -->
+<div class="grid gap-4">
+<!-- Alarm Card: Work (Active) -->
+<div class="bg-primary-container p-6 rounded-[24px] shadow-sm flex flex-col justify-between group relative overflow-hidden transition-all duration-300">
+<div class="absolute top-0 right-0 p-4 opacity-20">
+<span class="material-symbols-outlined text-8xl" data-icon="work">work</span>
+</div>
+<div class="flex justify-between items-start relative z-10">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-on-primary-container text-sm" data-icon="location_on" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="text-on-primary-container font-semibold tracking-wide text-sm">Work</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-white">Central Office</h3>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-blue-900/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-white/30"></div>
+</label>
+</div>
+<div class="mt-8 flex items-end justify-between relative z-10">
+<div class="flex flex-col">
+<span class="text-on-primary-container/80 text-xs font-medium mb-1">Geofence Radius</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="cyclone">cyclone</span>
+<span class="text-white font-bold text-xl">500m</span>
+</div>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-primary-container bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-xs" data-icon="commute">commute</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Alarm Card: Gym -->
+<div class="bg-surface-container-lowest p-6 rounded-[24px] shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow duration-300">
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="location_on">location_on</span>
+<span class="text-on-surface-variant font-semibold tracking-wide text-sm">Gym</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-on-surface">Iron Temple Fitness</h3>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-outline-variant after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="mt-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Radius</span>
+<span class="text-on-surface font-bold">200m</span>
+</div>
+<div class="h-8 w-px bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[10px] font-bold uppercase tracking-widest">Alert</span>
+<span class="text-secondary font-bold">Vibration</span>
+</div>
+</div>
+<button class="text-primary p-2 hover:bg-primary/5 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+<!-- Alarm Card: Home (Tonal shift example) -->
+<div class="bg-surface-container p-6 rounded-[24px] border border-outline-variant/10">
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-on-surface-variant font-semibold tracking-wide text-sm">Home</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-on-surface">Sweet Sanctuary</h3>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-outline-variant after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="mt-6 flex items-center gap-3">
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold">1.2km Radius</span>
+<span class="px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold">Smart Arrival</span>
+</div>
+</div>
+</div>
+<!-- Secondary Section: Nearby Logic -->
+<div class="mt-12 mb-8">
+<h4 class="font-headline text-xl font-bold mb-4 px-2">Recent Destinations</h4>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-4">
+<div class="flex-shrink-0 w-40 bg-white p-4 rounded-xl shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-on-secondary-fixed" data-icon="local_cafe">local_cafe</span>
+</div>
+<p class="font-bold text-sm">Blue Bottle</p>
+<p class="text-xs text-on-surface-variant">450m away</p>
+</div>
+<div class="flex-shrink-0 w-40 bg-white p-4 rounded-xl shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-on-tertiary-fixed" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<p class="font-bold text-sm">Whole Foods</p>
+<p class="text-xs text-on-surface-variant">1.2km away</p>
+</div>
+<div class="flex-shrink-0 w-40 bg-white p-4 rounded-xl shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-on-primary-fixed" data-icon="train">train</span>
+</div>
+<p class="font-bold text-sm">Grand Central</p>
+<p class="text-xs text-on-surface-variant">2.8km away</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-28 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-container text-white shadow-lg flex items-center justify-center hover:scale-105 active:scale-90 transition-all duration-200 z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-slate-50/80 backdrop-blur-2xl rounded-t-[24px] shadow-[0_-8px_24px_rgba(0,0,0,0.06)] dark:bg-slate-950/80">
+<div class="flex justify-around items-center w-full px-4 pb-6 pt-3">
+<!-- Active Tab: Alarms -->
+<a class="flex flex-col items-center justify-center bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 rounded-full px-5 py-1.5 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="alarm_on" style="font-variation-settings: 'FILL' 1;">alarm_on</span>
+<span class="font-plus-jakarta text-[11px] font-semibold mt-0.5">Alarms</span>
+</a>
+<!-- Inactive Tab: Explore -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-5 py-1.5 hover:text-blue-500 dark:hover:text-blue-300 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="font-plus-jakarta text-[11px] font-semibold mt-0.5">Explore</span>
+</a>
+<!-- Inactive Tab: Settings -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-5 py-1.5 hover:text-blue-500 dark:hover:text-blue-300 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-plus-jakarta text-[11px] font-semibold mt-0.5">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>

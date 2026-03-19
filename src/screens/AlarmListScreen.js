@@ -1,112 +1,125 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Image,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { Colors, BorderRadius, Spacing } from '../constants/theme';
 import BottomTabBar from '../components/BottomTabBar';
 
-const ALARMS = [
-  {
-    id: '1',
-    label: 'Work',
-    name: 'Central Office',
-    radius: '500m',
-    active: true,
-    icon: 'briefcase',
-    featured: true,
-  },
-  {
-    id: '2',
-    label: 'Gym',
-    name: 'Iron Temple Fitness',
-    radius: '200m',
-    alert: 'Vibration',
-    active: false,
-    icon: 'barbell-outline',
-    featured: false,
-  },
-  {
-    id: '3',
-    label: 'Home',
-    name: 'Sweet Sanctuary',
-    radius: '1.2km',
-    tags: ['Smart Arrival'],
-    active: true,
-    icon: 'home',
-    featured: false,
-  },
-];
-
-const RECENT = [
-  { id: '1', name: 'Blue Bottle', distance: '450m away', icon: 'cafe-outline', color: Colors.secondaryFixed },
-  { id: '2', name: 'Whole Foods', distance: '1.2km away', icon: 'bag-outline', color: Colors.tertiaryFixed },
-  { id: '3', name: 'Grand Central', distance: '2.8km away', icon: 'train-outline', color: Colors.primaryFixed },
-];
+const STORAGE_KEY = '@vigilant_alarms';
 
 export default function AlarmListScreen({ navigation }) {
-  const [alarms, setAlarms] = useState(ALARMS);
+  const insets = useSafeAreaInsets();
+  const [alarms, setAlarms] = useState([]);
+
+  const loadAlarms = async () => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEY);
+      if (data) setAlarms(JSON.parse(data));
+    } catch (e) {
+      console.log('Error loading alarms', e);
+    }
+  };
+
+  const saveAlarms = async (newAlarms) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newAlarms));
+    } catch (e) {
+      console.log('Error saving alarms', e);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAlarms();
+    }, [])
+  );
 
   const toggleAlarm = (id) => {
-    setAlarms(prev => prev.map(a => a.id === id ? { ...a, active: !a.active } : a));
+    const updated = alarms.map(a => a.id === id ? { ...a, active: !a.active } : a);
+    setAlarms(updated);
+    saveAlarms(updated);
+  };
+
+  const deleteAlarm = (id) => {
+    Alert.alert('Delete Alarm', 'Are you sure you want to delete this alarm?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          const updated = alarms.filter(a => a.id !== id);
+          setAlarms(updated);
+          saveAlarms(updated);
+        },
+      },
+    ]);
   };
 
   return (
     <View style={styles.container}>
       {/* Top App Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconBtn}>
-          <Ionicons name="menu" size={24} color={Colors.primary} />
-        </TouchableOpacity>
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
         <Text style={styles.appTitle}>Vigilant Path</Text>
         <View style={styles.avatar}>
           <Ionicons name="person" size={20} color={Colors.primary} />
         </View>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Editorial Header */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
         <View style={styles.editorialHeader}>
           <Text style={styles.sectionLabel}>Active Monitor</Text>
           <Text style={styles.pageTitle}>Your Alarms</Text>
-          <Text style={styles.pageSubtitle}>Safely navigating your daily commutes.</Text>
+          <Text style={styles.pageSubtitle}>
+            {alarms.length === 0
+              ? 'Tap + to create your first location alarm.'
+              : `${alarms.filter(a => a.active).length} active of ${alarms.length} alarms.`}
+          </Text>
         </View>
+
+        {/* Empty State */}
+        {alarms.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="location-outline" size={48} color={Colors.outlineVariant} />
+            <Text style={styles.emptyText}>No alarms yet</Text>
+            <Text style={styles.emptySubtext}>Create an alarm to get notified when you reach a destination</Text>
+          </View>
+        )}
 
         {/* Alarm Cards */}
         <View style={styles.alarmList}>
-          {alarms.map((alarm) => (
-            alarm.featured ? (
-              <FeaturedAlarmCard key={alarm.id} alarm={alarm} onToggle={toggleAlarm} onPress={() => navigation.navigate('ActiveAlarm')} />
-            ) : (
-              <AlarmCard key={alarm.id} alarm={alarm} onToggle={toggleAlarm} onEdit={() => navigation.navigate('CreateAlarm')} />
-            )
+          {alarms.map((alarm, idx) => (
+            <AlarmCard
+              key={alarm.id}
+              alarm={alarm}
+              featured={idx === 0 && alarm.active}
+              onToggle={() => toggleAlarm(alarm.id)}
+              onEdit={() => navigation.navigate('CreateAlarm', { alarm })}
+              onDelete={() => deleteAlarm(alarm.id)}
+              onPress={() => {
+                if (alarm.active) {
+                  navigation.navigate('ActiveAlarm', { alarm });
+                }
+              }}
+            />
           ))}
         </View>
 
-        {/* Recent Destinations */}
-        <View style={styles.recentSection}>
-          <Text style={styles.recentTitle}>Recent Destinations</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentList}>
-            {RECENT.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.recentCard}>
-                <View style={[styles.recentIcon, { backgroundColor: item.color }]}>
-                  <Ionicons name={item.icon} size={20} color={Colors.onSurface} />
-                </View>
-                <Text style={styles.recentName}>{item.name}</Text>
-                <Text style={styles.recentDistance}>{item.distance}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Bottom spacing for nav */}
-        <View style={{ height: 120 }} />
+        <View style={{ height: insets.bottom + 120 }} />
       </ScrollView>
 
       {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { bottom: insets.bottom + 80 }]}
         onPress={() => navigation.navigate('CreateAlarm')}
         activeOpacity={0.85}
       >
@@ -120,7 +133,6 @@ export default function AlarmListScreen({ navigation }) {
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* Bottom Tab Bar */}
       <BottomTabBar activeTab="AlarmList" onTabPress={(tab) => {
         if (tab === 'CreateAlarm') navigation.navigate('CreateAlarm');
       }} />
@@ -128,377 +140,144 @@ export default function AlarmListScreen({ navigation }) {
   );
 }
 
-function FeaturedAlarmCard({ alarm, onToggle, onPress }) {
-  return (
-    <TouchableOpacity activeOpacity={0.85} onPress={onPress}>
-      <LinearGradient
-        colors={[Colors.primaryContainer, '#003fb5']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.featuredCard}
-      >
-        {/* Background watermark */}
-        <View style={styles.watermark}>
-          <Ionicons name="briefcase" size={80} color="rgba(255,255,255,0.08)" />
-        </View>
-
-        <View style={styles.cardTop}>
-          <View>
-            <View style={styles.cardLabelRow}>
-              <Ionicons name="location" size={14} color={Colors.onPrimaryContainer} />
-              <Text style={styles.featuredLabel}>{alarm.label}</Text>
+function AlarmCard({ alarm, featured, onToggle, onEdit, onDelete, onPress }) {
+  if (featured) {
+    return (
+      <TouchableOpacity activeOpacity={0.85} onPress={onPress} onLongPress={onDelete}>
+        <LinearGradient
+          colors={[Colors.primaryContainer, '#003fb5']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.featuredCard}
+        >
+          <View style={styles.cardTop}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.cardLabelRow}>
+                <Ionicons name="location" size={14} color={Colors.onPrimaryContainer} />
+                <Text style={styles.featuredLabel}>{alarm.label || 'Alarm'}</Text>
+              </View>
+              <Text style={styles.featuredName} numberOfLines={1}>{alarm.address || 'Destination'}</Text>
             </View>
-            <Text style={styles.featuredName}>{alarm.name}</Text>
-          </View>
-          <Switch
-            value={alarm.active}
-            onValueChange={() => onToggle(alarm.id)}
-            trackColor={{ false: 'rgba(0,0,0,0.2)', true: 'rgba(255,255,255,0.3)' }}
-            thumbColor="#fff"
-          />
-        </View>
-
-        <View style={styles.cardBottom}>
-          <View>
-            <Text style={styles.featuredRadiusLabel}>Geofence Radius</Text>
-            <View style={styles.radiusRow}>
-              <Ionicons name="disc-outline" size={20} color={Colors.onPrimaryContainer} />
-              <Text style={styles.featuredRadius}>{alarm.radius}</Text>
-            </View>
-          </View>
-          <View style={styles.commuteIcon}>
-            <Ionicons name="car-outline" size={16} color={Colors.onSurface} />
-          </View>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-}
-
-function AlarmCard({ alarm, onToggle, onEdit }) {
-  const isHome = alarm.label === 'Home';
-  return (
-    <View style={[styles.alarmCard, isHome && styles.alarmCardTonal]}>
-      <View style={styles.cardTop}>
-        <View>
-          <View style={styles.cardLabelRow}>
-            <Ionicons
-              name={isHome ? 'home' : 'location-outline'}
-              size={14}
-              color={isHome ? Colors.tertiary : Colors.primary}
+            <Switch
+              value={alarm.active}
+              onValueChange={onToggle}
+              trackColor={{ false: 'rgba(0,0,0,0.2)', true: 'rgba(255,255,255,0.3)' }}
+              thumbColor="#fff"
             />
-            <Text style={styles.cardLabel}>{alarm.label}</Text>
           </View>
-          <Text style={styles.cardName}>{alarm.name}</Text>
+          <View style={styles.cardBottom}>
+            <View>
+              <Text style={styles.featuredRadiusLabel}>Geofence Radius</Text>
+              <View style={styles.radiusRow}>
+                <Ionicons name="disc-outline" size={18} color={Colors.onPrimaryContainer} />
+                <Text style={styles.featuredRadius}>{alarm.radius || 500}m</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={onEdit} style={styles.editBtnFeatured}>
+              <Ionicons name="create-outline" size={18} color={Colors.onPrimaryContainer} />
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      style={styles.alarmCard}
+      activeOpacity={0.85}
+      onPress={onPress}
+      onLongPress={onDelete}
+    >
+      <View style={styles.cardTop}>
+        <View style={{ flex: 1 }}>
+          <View style={styles.cardLabelRow}>
+            <Ionicons name="location-outline" size={14} color={Colors.primary} />
+            <Text style={styles.cardLabel}>{alarm.label || 'Alarm'}</Text>
+          </View>
+          <Text style={styles.cardName} numberOfLines={1}>{alarm.address || 'Destination'}</Text>
         </View>
         <Switch
           value={alarm.active}
-          onValueChange={() => onToggle(alarm.id)}
+          onValueChange={onToggle}
           trackColor={{ false: Colors.surfaceContainerHighest, true: Colors.primary }}
           thumbColor="#fff"
         />
       </View>
-
       <View style={styles.cardInfo}>
-        {alarm.alert ? (
-          <View style={styles.infoRow}>
-            <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>Radius</Text>
-              <Text style={styles.infoValue}>{alarm.radius}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoBlock}>
-              <Text style={styles.infoLabel}>Alert</Text>
-              <Text style={[styles.infoValue, { color: Colors.secondary }]}>{alarm.alert}</Text>
-            </View>
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity onPress={onEdit} style={styles.editBtn}>
-              <Ionicons name="create-outline" size={20} color={Colors.primary} />
-            </TouchableOpacity>
+        <View style={styles.tagRow}>
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{alarm.radius || 500}m Radius</Text>
           </View>
-        ) : (
-          <View style={styles.tagRow}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{alarm.radius} Radius</Text>
-            </View>
-            {alarm.tags?.map((t, i) => (
-              <View key={i} style={[styles.tag, { backgroundColor: Colors.tertiaryFixed }]}>
-                <Text style={[styles.tagText, { color: Colors.onTertiaryFixed }]}>{t}</Text>
-              </View>
-            ))}
+          <View style={[styles.tag, { backgroundColor: alarm.active ? Colors.primaryFixed : Colors.surfaceContainerHighest }]}>
+            <Text style={[styles.tagText, alarm.active && { color: Colors.primary }]}>
+              {alarm.active ? 'Active' : 'Inactive'}
+            </Text>
           </View>
-        )}
+        </View>
+        <TouchableOpacity onPress={onEdit} style={styles.editBtn}>
+          <Ionicons name="create-outline" size={20} color={Colors.primary} />
+        </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
-    paddingTop: 56,
     paddingBottom: Spacing.md,
-    backgroundColor: 'rgba(250, 248, 255, 0.7)',
+    backgroundColor: Colors.background,
   },
-  iconBtn: {
-    padding: 8,
-  },
-  appTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: Colors.primary,
-    letterSpacing: -0.3,
-  },
+  appTitle: { fontSize: 20, fontWeight: '800', color: Colors.primary, letterSpacing: -0.3 },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: Colors.primaryFixed,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.primaryFixed,
+    alignItems: 'center', justifyContent: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.xl,
-  },
-  editorialHeader: {
-    marginBottom: Spacing.xxl,
-    marginTop: Spacing.lg,
-  },
-  sectionLabel: {
-    color: Colors.primary,
-    fontWeight: '600',
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: 6,
-  },
-  pageTitle: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: Colors.onBackground,
-    letterSpacing: -0.5,
-  },
-  pageSubtitle: {
-    fontSize: 17,
-    color: Colors.onSurfaceVariant,
-    marginTop: 6,
-  },
-  alarmList: {
-    gap: Spacing.lg,
-  },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: Spacing.xl },
+  editorialHeader: { marginBottom: Spacing.xxl, marginTop: Spacing.lg },
+  sectionLabel: { color: Colors.primary, fontWeight: '600', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 },
+  pageTitle: { fontSize: 34, fontWeight: '800', color: Colors.onBackground, letterSpacing: -0.5 },
+  pageSubtitle: { fontSize: 15, color: Colors.onSurfaceVariant, marginTop: 6 },
+  emptyState: { alignItems: 'center', paddingVertical: 60, gap: 12 },
+  emptyText: { fontSize: 18, fontWeight: '700', color: Colors.onSurfaceVariant },
+  emptySubtext: { fontSize: 14, color: Colors.outline, textAlign: 'center', paddingHorizontal: 40 },
+  alarmList: { gap: Spacing.lg },
   // Featured Card
-  featuredCard: {
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-  },
-  watermark: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    padding: 16,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  featuredLabel: {
-    color: Colors.onPrimaryContainer,
-    fontWeight: '600',
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  featuredName: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginTop: Spacing.xxl,
-  },
-  featuredRadiusLabel: {
-    color: 'rgba(204, 216, 255, 0.8)',
-    fontSize: 11,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  radiusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  featuredRadius: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  commuteIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceContainerHighest,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.primaryContainer,
-  },
+  featuredCard: { padding: Spacing.xl, borderRadius: BorderRadius.xl, overflow: 'hidden' },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cardLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  featuredLabel: { color: Colors.onPrimaryContainer, fontWeight: '600', fontSize: 13 },
+  featuredName: { fontSize: 22, fontWeight: '700', color: '#ffffff' },
+  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: Spacing.xl },
+  featuredRadiusLabel: { color: 'rgba(204,216,255,0.8)', fontSize: 11, fontWeight: '500', marginBottom: 4 },
+  radiusRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  featuredRadius: { color: '#ffffff', fontSize: 18, fontWeight: '700' },
+  editBtnFeatured: { padding: 8 },
   // Normal Card
   alarmCard: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.04,
-    shadowRadius: 24,
-    elevation: 2,
+    backgroundColor: Colors.surfaceContainerLowest, padding: Spacing.xl,
+    borderRadius: BorderRadius.xl, shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
   },
-  alarmCardTonal: {
-    backgroundColor: Colors.surfaceContainer,
-    borderWidth: 1,
-    borderColor: 'rgba(195, 198, 214, 0.1)',
-  },
-  cardLabel: {
-    color: Colors.onSurfaceVariant,
-    fontWeight: '600',
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  cardName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  cardInfo: {
-    marginTop: Spacing.xl,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-  infoBlock: {
-    gap: 2,
-  },
-  infoLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: Colors.onSurfaceVariant,
-  },
-  infoValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  divider: {
-    height: 32,
-    width: 1,
-    backgroundColor: 'rgba(195, 198, 214, 0.3)',
-  },
-  editBtn: {
-    padding: 8,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surfaceContainerHighest,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.onSurfaceVariant,
-  },
-  // Recent
-  recentSection: {
-    marginTop: Spacing.xxxl,
-  },
-  recentTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: Spacing.lg,
-    paddingHorizontal: 4,
-    color: Colors.onBackground,
-  },
-  recentList: {
-    gap: Spacing.lg,
-    paddingRight: Spacing.xl,
-  },
-  recentCard: {
-    width: 140,
-    backgroundColor: '#fff',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 1,
-  },
-  recentIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
-  },
-  recentName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  recentDistance: {
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
+  cardLabel: { color: Colors.onSurfaceVariant, fontWeight: '600', fontSize: 13 },
+  cardName: { fontSize: 20, fontWeight: '700', color: Colors.onSurface },
+  cardInfo: { marginTop: Spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  tagRow: { flexDirection: 'row', gap: Spacing.sm },
+  tag: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full, backgroundColor: Colors.surfaceContainerHighest },
+  tagText: { fontSize: 11, fontWeight: '700', color: Colors.onSurfaceVariant },
+  editBtn: { padding: 8 },
   // FAB
   fab: {
-    position: 'absolute',
-    bottom: 100,
-    right: 24,
-    borderRadius: 32,
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    position: 'absolute', right: 24, borderRadius: 32, overflow: 'hidden',
+    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
   },
-  fabGradient: {
-    width: 64,
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 32,
-  },
+  fabGradient: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 32 },
 });

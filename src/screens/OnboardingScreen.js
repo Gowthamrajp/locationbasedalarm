@@ -1,15 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, BorderRadius, Spacing } from '../constants/theme';
 import GradientButton from '../components/GradientButton';
 
 const { width } = Dimensions.get('window');
 
 export default function OnboardingScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.accentLine} />
@@ -104,7 +114,7 @@ export default function OnboardingScreen({ navigation }) {
       <Text style={styles.privacyText}>
         Vigilant Path processes your location data locally and only for the duration of active alarms. We never share your movement history.
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -112,9 +122,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.surfaceContainerLow,
+  },
+  scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'flex-start',

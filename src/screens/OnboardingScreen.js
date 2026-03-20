@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, Spacing } from '../constants/theme';
 
-export default function OnboardingScreen({ navigation }) {
+export default function OnboardingScreen({ navigation, onComplete }) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -50,7 +50,7 @@ export default function OnboardingScreen({ navigation }) {
       {/* CTA */}
       <TouchableOpacity
         activeOpacity={0.85}
-        onPress={() => navigation.replace('AlarmList')}
+        onPress={onComplete}
         style={styles.ctaWrapper}
       >
         <LinearGradient

@@ -28,6 +28,11 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "backgroundColor": "#0040a1"
       },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyC2FQcKDj3MQIEayM-jLqqg74_jYXtDq-U"
+        }
+      },
       "package": "com.vigilantpath.locationbasedalarm",
       "permissions": [
         "ACCESS_FINE_LOCATION",

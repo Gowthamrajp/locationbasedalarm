@@ -135,6 +135,7 @@ export default function AlarmListScreen({ navigation }) {
 
       <BottomTabBar activeTab="AlarmList" onTabPress={(tab) => {
         if (tab === 'CreateAlarm') navigation.navigate('CreateAlarm');
+        if (tab === 'Settings') Alert.alert('Settings', 'Settings page coming soon!');
       }} />
     </View>
   );

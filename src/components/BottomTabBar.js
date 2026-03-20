@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, BorderRadius } from '../constants/theme';
 
 const tabs = [
@@ -10,8 +11,10 @@ const tabs = [
 ];
 
 export default function BottomTabBar({ activeTab, onTabPress }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 16) }]}>
       <View style={styles.inner}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
@@ -44,7 +47,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(250, 248, 255, 0.85)',
+    backgroundColor: 'rgba(250, 248, 255, 0.95)',
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     shadowColor: '#000',
@@ -57,8 +60,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 34,
+    paddingTop: 10,
     paddingHorizontal: 16,
   },
   tab: {

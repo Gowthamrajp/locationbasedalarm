@@ -42,7 +42,32 @@ tests/
 - ✅ Sound toggle visible
 - ✅ Alert shown when saving without location
 
-### Running Tests Locally
+### Quick Commands (Makefile)
+
+```bash
+make test        # Full pipeline: build → install → test
+make test-only   # Run Appium tests only (APK must exist)
+make build       # Build APK only
+make install     # Build + install on device
+make check       # Build + test, shows "safe to push"
+make help        # Show all commands
+```
+
+Or use the script directly:
+```bash
+./scripts/local-build-test.sh
+```
+
+The script runs 5 steps:
+1. ✅ Check prerequisites (Android SDK, device)
+2. ✅ Install npm dependencies
+3. ✅ Build release APK
+4. ✅ Install on connected device
+5. ✅ Run Appium E2E tests
+
+If any step fails, the script exits with an error — preventing you from pushing broken code.
+
+### Running Tests Locally (Manual)
 
 #### Prerequisites
 ```bash

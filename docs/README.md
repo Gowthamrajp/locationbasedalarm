@@ -13,6 +13,7 @@
 | [Signing & Security](./SIGNING.md) | Keystore management and app signing |
 | [API Keys](./API_KEYS.md) | Google Maps API key setup, security, and restrictions |
 | [Update System](./UPDATE_SYSTEM.md) | Forced updates and version management |
+| [Testing](./TESTING.md) | Appium E2E tests, local testing, CI pipeline |
 
 ## 🚀 Quick Start
 
@@ -24,14 +25,37 @@ cd locationbasedalarm
 # Install dependencies
 npm install
 
+# See all available commands
+make help
+
 # Run on Android device/emulator
-npx expo run:android
+make run-android
+
+# Build, test, and install
+make test
 
 # Build release APK
-npx expo run:android --variant release
+make build
 
 # Build AAB for Play Store
-cd android && ./gradlew app:bundleRelease -x lint -x test
+make build-aab
+
+# Deploy a release (tags → CI/CD → Play Store)
+make deploy
+```
+
+### Development Workflow
+
+```bash
+# 1. Make your changes
+# 2. Build & test locally
+make test
+
+# 3. If tests pass, commit and push
+git add -A && git commit -m "your changes"
+git push origin main
+
+# 4. CI/CD runs: Build → Appium E2E Tests → Deploy
 ```
 
 ## 📱 App Overview

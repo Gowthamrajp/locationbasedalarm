@@ -16,3 +16,12 @@ npm-debug.*
 tmp_backup/
 stitch-overview.png
 stitch-screens.png
+
+# Keystore & signing secrets
+android/app/keystores/
+*.keystore
+android/local.properties
+android/gradle.properties
+
+# Build outputs
+android/app/build/

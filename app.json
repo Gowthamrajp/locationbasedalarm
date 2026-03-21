@@ -30,7 +30,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyC2FQcKDj3MQIEayM-jLqqg74_jYXtDq-U"
+          "apiKey": "REPLACE_WITH_YOUR_API_KEY"
         }
       },
       "package": "com.vigilantpath.locationbasedalarm",
@@ -38,8 +38,12 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
         "VIBRATE",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK"
       ]
     },
     "web": {

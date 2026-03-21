@@ -1,0 +1,9 @@
+{
+  "latestVersion": "1.0.0",
+  "latestVersionCode": 1,
+  "minimumVersion": "1.0.0",
+  "minimumVersionCode": 1,
+  "forceUpdate": false,
+  "updateMessage": "A new version of Vigilant Path is available! Update now for the best experience.",
+  "playStoreUrl": "https://play.google.com/store/apps/details?id=com.vigilantpath.locationbasedalarm"
+}

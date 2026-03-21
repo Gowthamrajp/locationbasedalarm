@@ -1,21 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Vibration, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Vibration, Platform, AppState, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
+import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, BorderRadius, Spacing } from '../constants/theme';
-
-function getDistanceMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+import { getDistanceMeters, clearTriggeredAlarm, snoozeTriggeredAlarm } from '../services/GeofenceService';
 
 export default function ActiveAlarmScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -23,6 +15,99 @@ export default function ActiveAlarmScreen({ navigation, route }) {
   const [distance, setDistance] = useState(null);
   const [arrived, setArrived] = useState(false);
   const [triggeredTime, setTriggeredTime] = useState(null);
+  const soundRef = useRef(null);
+  const vibrationIntervalRef = useRef(null);
+  const arrivedRef = useRef(false);
+
+  // Start continuous vibration
+  const startContinuousVibration = () => {
+    // Vibrate immediately
+    Vibration.vibrate([0, 800, 400, 800, 400, 800], true); // repeat=true for Android
+    // For extra reliability, set up an interval
+    if (vibrationIntervalRef.current) clearInterval(vibrationIntervalRef.current);
+    vibrationIntervalRef.current = setInterval(() => {
+      Vibration.vibrate([0, 800, 400, 800, 400, 800], false);
+    }, 4000);
+  };
+
+  // Stop continuous vibration
+  const stopContinuousVibration = () => {
+    Vibration.cancel();
+    if (vibrationIntervalRef.current) {
+      clearInterval(vibrationIntervalRef.current);
+      vibrationIntervalRef.current = null;
+    }
+  };
+
+  // Start alarm sound
+  const startAlarmSound = async () => {
+    try {
+      // Set audio mode for alarm - play even in silent mode
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: false,
+        playThroughEarpieceAndroid: false,
+      });
+
+      // Use a system-like alarm sound - create a looping tone
+      const { sound } = await Audio.Sound.createAsync(
+        // Use a built-in expo asset or a generated beep
+        require('../../assets/alarm-sound.mp3'),
+        {
+          isLooping: true,
+          volume: 1.0,
+          shouldPlay: true,
+        }
+      );
+      soundRef.current = sound;
+    } catch (e) {
+      console.log('Could not play alarm sound, trying fallback:', e);
+      // Fallback: try without the asset
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: false,
+        });
+      } catch (e2) {
+        console.log('Audio mode error:', e2);
+      }
+    }
+  };
+
+  // Stop alarm sound
+  const stopAlarmSound = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+    } catch (e) {
+      console.log('Error stopping sound:', e);
+    }
+  };
+
+  // Trigger the alarm
+  const triggerAlarm = async () => {
+    if (arrivedRef.current) return;
+    arrivedRef.current = true;
+    setArrived(true);
+    setTriggeredTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+
+    // Start vibration if enabled
+    if (alarm?.vibrate !== false) {
+      startContinuousVibration();
+    }
+
+    // Start sound if enabled
+    if (alarm?.sound !== false) {
+      await startAlarmSound();
+    }
+  };
 
   useEffect(() => {
     let subscription;
@@ -41,23 +126,72 @@ export default function ActiveAlarmScreen({ navigation, route }) {
           );
           setDistance(Math.round(dist));
 
-          if (dist <= (alarm.radius || 500) && !arrived) {
-            setArrived(true);
-            setTriggeredTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-            if (alarm.vibrate !== false) {
-              Vibration.vibrate([0, 500, 200, 500, 200, 500], false);
-            }
+          if (dist <= (alarm.radius || 500) && !arrivedRef.current) {
+            triggerAlarm();
           }
         }
       );
     };
 
     startTracking();
-    return () => subscription?.remove();
+
+    // Cleanup on unmount
+    return () => {
+      subscription?.remove();
+      stopContinuousVibration();
+      stopAlarmSound();
+    };
   }, [alarm]);
 
-  const handleDismiss = () => {
-    Vibration.cancel();
+  // Keep vibrating even when app goes to background/foreground
+  useEffect(() => {
+    const appStateListener = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && arrivedRef.current) {
+        // Re-trigger vibration when coming back to foreground
+        if (alarm?.vibrate !== false) {
+          startContinuousVibration();
+        }
+      }
+    });
+
+    return () => appStateListener?.remove();
+  }, [alarm]);
+
+  const handleSnooze = async () => {
+    // Stop sound and vibration
+    stopContinuousVibration();
+    await stopAlarmSound();
+
+    // Snooze the alarm - will re-trigger when user leaves and re-enters geofence
+    if (alarm?.id) {
+      await snoozeTriggeredAlarm(alarm.id);
+    }
+
+    navigation.goBack();
+  };
+
+  const handleDismiss = async () => {
+    // Stop everything
+    stopContinuousVibration();
+    await stopAlarmSound();
+
+    // Clear the triggered state completely
+    if (alarm?.id) {
+      await clearTriggeredAlarm(alarm.id);
+
+      // Disable the alarm so it doesn't re-trigger
+      try {
+        const data = await AsyncStorage.getItem('@vigilant_alarms');
+        if (data) {
+          const alarms = JSON.parse(data);
+          const updated = alarms.map(a => a.id === alarm.id ? { ...a, active: false } : a);
+          await AsyncStorage.setItem('@vigilant_alarms', JSON.stringify(updated));
+        }
+      } catch (e) {
+        console.log('Error disabling alarm:', e);
+      }
+    }
+
     navigation.goBack();
   };
 
@@ -99,7 +233,7 @@ export default function ActiveAlarmScreen({ navigation, route }) {
             <View style={[styles.pulseRing, arrived && styles.pulseRingArrived]} />
             <View style={styles.locationCircle}>
               <Ionicons
-                name="location"
+                name={arrived ? 'notifications' : 'location'}
                 size={36}
                 color={arrived ? Colors.secondary : Colors.primary}
               />
@@ -108,10 +242,10 @@ export default function ActiveAlarmScreen({ navigation, route }) {
 
           <View style={styles.destinationInfo}>
             <Text style={styles.arrivedLabel}>
-              {arrived ? 'Arrived at Destination' : 'Approaching Destination'}
+              {arrived ? '🔔 ALARM TRIGGERED' : 'Approaching Destination'}
             </Text>
             <Text style={styles.arrivedTitle}>
-              {arrived ? `Arrived at ${alarm?.label || 'destination'}!` : alarm?.label || 'Destination'}
+              {arrived ? `${alarm?.label || 'Destination'}` : alarm?.label || 'Destination'}
             </Text>
             {alarm?.address && (
               <Text style={styles.addressText} numberOfLines={1}>{alarm.address}</Text>
@@ -124,16 +258,38 @@ export default function ActiveAlarmScreen({ navigation, route }) {
             )}
           </View>
 
+          {/* Alarm Active Indicator */}
+          {arrived && (
+            <View style={styles.alarmActiveIndicator}>
+              <Ionicons name="volume-high" size={16} color="#fff" />
+              <Text style={styles.alarmActiveText}>
+                {alarm?.vibrate !== false && alarm?.sound !== false
+                  ? 'Vibrating & Playing Sound'
+                  : alarm?.vibrate !== false
+                  ? 'Vibrating'
+                  : alarm?.sound !== false
+                  ? 'Playing Sound'
+                  : 'Alarm Active'}
+              </Text>
+              <View style={styles.pulsingDot} />
+            </View>
+          )}
+
           {/* Distance Bar */}
           <View style={styles.proximityBar}>
             <View style={styles.proximityLeft}>
-              <Ionicons name="navigate-outline" size={18} color="#fff" />
+              {distance == null ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="navigate-outline" size={18} color="#fff" />
+              )}
               <Text style={styles.proximityText}>{formatDistance(distance)}</Text>
             </View>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${progressPercent * 100}%` }]} />
+            <View style={styles.proximityRight}>
+              <Text style={styles.radiusLabel}>Radius: {alarm?.radius >= 1000 ? `${(alarm.radius / 1000).toFixed(1).replace(/\.0$/, '')}km` : `${alarm?.radius || 500}m`}</Text>
             </View>
           </View>
+
         </View>
 
         <View style={{ flex: 1 }} />
@@ -143,20 +299,31 @@ export default function ActiveAlarmScreen({ navigation, route }) {
           <TouchableOpacity style={styles.dismissBtn} onPress={handleDismiss} activeOpacity={0.85}>
             <Ionicons name="close" size={26} color={arrived ? Colors.secondary : Colors.primary} />
             <Text style={[styles.dismissText, { color: arrived ? Colors.secondary : Colors.primary }]}>
-              Dismiss Alarm
+              {arrived ? 'Stop & Dismiss Alarm' : 'Dismiss Alarm'}
             </Text>
           </TouchableOpacity>
 
+          {arrived && (
+            <TouchableOpacity style={styles.snoozeBtn} onPress={handleSnooze} activeOpacity={0.85}>
+              <Ionicons name="moon-outline" size={20} color="#fff" />
+              <View>
+                <Text style={styles.snoozeBtnText}>Snooze</Text>
+                <Text style={styles.snoozeSubText}>Re-alerts when you leave & come back</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.navBtn} activeOpacity={0.85} onPress={() => {
             if (alarm && Platform.OS !== 'web') {
+              // Open Google Maps with directions (map view, not auto-start navigation)
               const url = Platform.OS === 'ios'
-                ? `maps:?daddr=${alarm.latitude},${alarm.longitude}`
-                : `google.navigation:q=${alarm.latitude},${alarm.longitude}`;
+                ? `https://maps.google.com/maps?daddr=${alarm.latitude},${alarm.longitude}`
+                : `https://www.google.com/maps/dir/?api=1&destination=${alarm.latitude},${alarm.longitude}`;
               import('react-native').then(({ Linking }) => Linking.openURL(url).catch(() => {}));
             }
           }}>
-            <Ionicons name="navigate-outline" size={18} color="#fff" />
-            <Text style={styles.navBtnText}>Open Navigation</Text>
+            <Ionicons name="map-outline" size={18} color="#fff" />
+            <Text style={styles.navBtnText}>Open in Google Maps</Text>
           </TouchableOpacity>
         </View>
 
@@ -164,7 +331,7 @@ export default function ActiveAlarmScreen({ navigation, route }) {
         <View style={styles.bottomStatus}>
           <Ionicons name="pulse-outline" size={16} color="rgba(255,255,255,0.6)" />
           <Text style={styles.statusText}>
-            {arrived ? 'Vibrating • Audio Active' : 'Monitoring location...'}
+            {arrived ? 'Alarm will continue until dismissed' : 'Monitoring location...'}
           </Text>
         </View>
       </View>
@@ -216,15 +383,31 @@ const styles = StyleSheet.create({
   addressText: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   timeText: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.7)' },
+  alarmActiveIndicator: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
+    marginTop: Spacing.lg,
+  },
+  alarmActiveText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  pulsingDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: '#ff4444',
+  },
   proximityBar: {
     marginTop: Spacing.xl, width: '100%', backgroundColor: 'rgba(0,0,0,0.1)',
     borderRadius: BorderRadius.md, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   proximityLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  proximityText: { color: '#fff', fontWeight: '500', fontSize: 14 },
-  progressBar: { height: 4, width: 48, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#fff', borderRadius: 2 },
+  proximityText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  proximityRight: {},
+  radiusLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '600' },
+  progressBarContainer: { width: '100%', marginTop: Spacing.md },
+  progressBarTrack: { height: 6, width: '100%', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3, overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: '#fff', borderRadius: 3 },
+  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  progressLabelText: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.5)' },
   actions: { width: '100%', gap: Spacing.md },
   dismissBtn: {
     width: '100%', height: 64, backgroundColor: '#fff',
@@ -234,6 +417,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
   },
   dismissText: { fontSize: 18, fontWeight: '800' },
+  snoozeBtn: {
+    width: '100%', height: 56, borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.md,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+  },
+  snoozeBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  snoozeSubText: { fontSize: 10, fontWeight: '500', color: 'rgba(255,255,255,0.7)' },
   navBtn: {
     width: '100%', height: 52, borderRadius: BorderRadius.full,
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',

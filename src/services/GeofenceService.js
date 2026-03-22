@@ -1,7 +1,10 @@
+import { NativeModules, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { AlarmModule } = NativeModules;
 
 const STORAGE_KEY = '@vigilant_alarms';
 const TRIGGERED_KEY = '@vigilant_triggered';
@@ -155,6 +158,20 @@ async function checkGeofences(lat, lon) {
           distance: Math.round(dist),
         }));
 
+        // Start native alarm service (plays sound + vibrates from background)
+        if (Platform.OS === 'android' && AlarmModule) {
+          try {
+            AlarmModule.startAlarm(
+              alarm.sound !== false,
+              alarm.vibrate !== false,
+              alarm.label || 'Alarm'
+            );
+          } catch (e) {
+            console.log('Native alarm error, falling back to notification:', e);
+          }
+        }
+
+        // Also send notification (for foreground awareness + iOS fallback)
         await Notifications.scheduleNotificationAsync({
           content: {
             title: '📍 Arrived at destination!',

@@ -5,9 +5,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { Audio } from 'expo-av';
+import { NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, BorderRadius, Spacing } from '../constants/theme';
 import { getDistanceMeters, clearTriggeredAlarm, snoozeTriggeredAlarm } from '../services/GeofenceService';
+
+const { AlarmModule } = NativeModules;
 
 export default function ActiveAlarmScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -158,7 +161,11 @@ export default function ActiveAlarmScreen({ navigation, route }) {
   }, [alarm]);
 
   const handleSnooze = async () => {
-    // Stop sound and vibration
+    // Stop native alarm service
+    if (Platform.OS === 'android' && AlarmModule) {
+      try { AlarmModule.snoozeAlarm(); } catch (e) {}
+    }
+    // Stop JS-level sound and vibration
     stopContinuousVibration();
     await stopAlarmSound();
 
@@ -171,7 +178,11 @@ export default function ActiveAlarmScreen({ navigation, route }) {
   };
 
   const handleDismiss = async () => {
-    // Stop everything
+    // Stop native alarm service
+    if (Platform.OS === 'android' && AlarmModule) {
+      try { AlarmModule.stopAlarm(); } catch (e) {}
+    }
+    // Stop JS-level sound and vibration
     stopContinuousVibration();
     await stopAlarmSound();
 

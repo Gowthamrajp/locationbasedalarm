@@ -3,6 +3,12 @@
 # =============================================================
 # cp gradle.properties.example gradle.properties
 
+# Project-wide Gradle settings.
+org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
+org.gradle.parallel=true
+android.useAndroidX=true
+android.enablePngCrunchInReleaseBuilds=true
+
 # Signing config for release builds
 VIGILANT_STORE_FILE=keystores/release.keystore
 VIGILANT_STORE_PASSWORD=YOUR_KEYSTORE_PASSWORD
@@ -16,18 +22,3 @@ GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
 # DO NOT COMMIT gradle.properties TO GIT!
 # It contains secrets and is listed in .gitignore
 # =============================================================
-
-# Project-wide Gradle settings.
-org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
-org.gradle.parallel=true
-android.useAndroidX=true
-android.enablePngCrunchInReleaseBuilds=true
-reactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
-newArchEnabled=true
-hermesEnabled=true
-edgeToEdgeEnabled=true
-expo.gif.enabled=true
-expo.webp.enabled=true
-expo.webp.animated=false
-EX_DEV_CLIENT_NETWORK_INSPECTOR=true
-expo.useLegacyPackaging=false

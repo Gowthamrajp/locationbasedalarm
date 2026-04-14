@@ -1,27 +1,23 @@
-node_modules/
-.expo/
-dist/
-web-build/
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
-npm-debug.*
-.DS_Store
-*.pem
-.env
-.env.local
-tmp_backup/
-stitch-overview.png
-stitch-screens.png
-
-# Keystore & signing secrets
-android/app/keystores/
-*.keystore
+# Android build
+android/app/build/
+android/build/
+android/.gradle/
 android/local.properties
 android/gradle.properties
+android/app/debug.keystore
 
-# Build outputs
-android/app/build/
+# Keystores
+android/app/keystores/*.keystore
+android/app/keystores/*.jks
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log

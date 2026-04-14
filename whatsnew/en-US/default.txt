@@ -1,7 +1,0 @@
-• Location-based alarms with geofencing
-• Background monitoring with notifications
-• Continuous alarm sound & vibration until dismissed
-• Snooze: re-triggers when you leave and come back
-• Search for places and addresses on the map
-• Custom radius with slider and manual input (m/km)
-• Choose vibration, sound, and ringtone preferences
